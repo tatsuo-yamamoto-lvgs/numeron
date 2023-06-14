@@ -6,13 +6,10 @@ int factorial(int digit, int n){
     if (n < 9-digit+1){
         return 1;
     }
-    return n*factorial(digit,n-1);
+    return (n+1)*factorial(digit,n-1);
 }
 
-int count = 0;
-int init_digit = 0;
-int permutation(char between0and9[],char number[],char **numbers,int digit,int n){
-    init_digit++;
+int permutation(char between0and9[],char number[],char *numbers[],int digit,int n,int *count_pointer, int init_digit){
     digit--;
     n--;
     for (int i= 0; i<=n+1; ++i){
@@ -29,15 +26,13 @@ int permutation(char between0and9[],char number[],char **numbers,int digit,int n
         between0and9[i] = between0and9[n+1];
         between0and9[n+1] = temp;
         if (digit <= 0){
+            // printf("%s\n",number);
             number[init_digit] = '\0';
-            strcpy(*numbers[count],number);
-            // for (int l=0; l<=init_digit; ++l){
-            //     numbers[count][l] = number[l];
-            // }
-            count++;
+            strcpy(numbers[*count_pointer],number);
             printf("%s\n",number);
+            *count_pointer = *count_pointer+1;
         }else{
-            permutation(between0and9,number,numbers,digit,n);
+            permutation(between0and9,number,numbers,digit,n,count_pointer,init_digit);
         }
         // 復元しようね
         int p;
@@ -55,19 +50,25 @@ int main(int argc, char *argv[]){
     }
     
     int digit = atoi(argv[1]);
+    int init_digit = atoi(argv[1]);
     int n = 9;
+    int count = 0;
+    int *count_pointer;
+    count_pointer = &count;
     int npr = factorial(digit, n);
     char between0and9[11] = {"0123456789\0"};
     char *number = (char*)malloc(sizeof(char)*(digit + 1));
     memset(number,'\0',sizeof(char)*(digit + 1));
-    char **numbers = (char**)malloc(sizeof(char*)*npr);
+    char **numbers = (char**)malloc(sizeof(char*)*(npr));
     for(int i = 0; i < npr; i++) {
         numbers[i] = (char*)malloc(sizeof(char)*(digit + 1));
         memset(numbers[i], '\0', sizeof(char)*(digit + 1));
     }
-    permutation(between0and9,number,numbers,digit,n);
+    permutation(between0and9,number,numbers,digit,n,count_pointer,init_digit);
     free(number);
-    printf("%s\n",numbers[1]);
+    for (int a=0; a<npr; a++){
+        printf("%d番目:%s\n",a,numbers[a]);
+    }
     for(int i = 0; i < npr; ++i) {
         free(numbers[i]);
     }

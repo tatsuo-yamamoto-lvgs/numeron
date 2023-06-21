@@ -6,6 +6,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 #include "offense.h"
 
 void assume(char *assume_number, char defense_message[], int int_digit, char *numbers[],int count,int npr,int size, int *last_array_num_pointer){
@@ -152,6 +153,7 @@ int transmission(int sock){
     int *last_array_num_pointer;
     last_array_num_pointer = &last_array_num;
     *last_array_num_pointer = npr;
+    clock_t start = clock();
     while (1){
         // 数字を出す関数をここに
         assume(assume_number,defense_message,int_digit,numbers,count,npr,size,last_array_num_pointer);
@@ -177,6 +179,8 @@ int transmission(int sock){
             break;
         }
     }
+    clock_t end = clock();
+    printf("time: %f\n", ((double)(end - start) / CLOCKS_PER_SEC));
     free(assume_number);
     for(int i = 0; i < npr; i++) {
         free(numbers[i]);

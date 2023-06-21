@@ -13,7 +13,6 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
     int graveCount;
     int eats = atoi(&defense_message[0]);
     int byts = atoi(&defense_message[2]);
-    // char *tmp = (char*)malloc(sizeof(char*)*(int_digit+1));
     if ((eats == 0) && (byts ==0)){
         for (int i = 0; i < int_digit; ++i){
             graveCountSum += graveCount;
@@ -22,11 +21,10 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
                 if (strchr(numbers[j], assume_number[i]) == NULL) {
                     memcpy(numbers[count+graveCount], numbers[j],int_digit);
                     ++graveCount;
-                    --*last_array_num_pointer;
                 }
             }
         }
-    } 
+    }
     if (eats == 0){
         int eatsZeroCount = 0;
         char** tmp_array = (char**)malloc(sizeof(char*)*(npr));
@@ -44,9 +42,9 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
             if (check == 0){
                 memcpy(tmp_array[eatsZeroCount], numbers[i], int_digit);
                 ++eatsZeroCount;
-                --*last_array_num_pointer;
             }
         }
+        *last_array_num_pointer = count + eatsZeroCount;
         for (int i = count; i < count+eatsZeroCount-1; ++i){
             memcpy(numbers[i], tmp_array[i-count], int_digit);
         }
@@ -73,9 +71,10 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
             if (check >= eats){
                 memcpy(tmp_array[eatsCount], numbers[i], int_digit);
                 ++eatsCount;
-                --*last_array_num_pointer;
+                // --*last_array_num_pointer;
             }
         }
+        *last_array_num_pointer = count + eatsCount;
         for (int i = count; i < count+eatsCount-1; ++i){
             memcpy(numbers[i], tmp_array[i-count], int_digit);
         }
@@ -103,9 +102,9 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
             if (check >= byts){
                 memcpy(tmp_array[bytsCount], numbers[i], int_digit);
                 ++bytsCount;
-                --*last_array_num_pointer;
             }
         }
+        *last_array_num_pointer = count + bytsCount;
         for (int i = count; i < count+bytsCount-1; ++i){
             memcpy(numbers[i], tmp_array[i-count], int_digit);
         }
@@ -116,7 +115,7 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
         printf("bytsCountの数は%d\n",bytsCount);
     }
     strcpy(assume_number,numbers[count]);
-    // free(tmp);
+    printf("*last_array_num_pointerの値は:%d\n",*last_array_num_pointer);
 }
 
 int transmission(int sock){
@@ -144,9 +143,12 @@ int transmission(int sock){
     // 受け取った桁数から重複のないn桁の数字の配列を作成
     char *assume_number = (char*)malloc(sizeof(char)*(int_digit+1));
     int count = 0;
-    int last_array_num = npr;
+    int last_array_num;
     int *last_array_num_pointer;
     last_array_num_pointer = &last_array_num;
+    *last_array_num_pointer = npr;
+
+    printf("*last_array_num_pointerの値は:%d\n",*last_array_num_pointer);
     while (1){
         // 数字を出す関数をここに
         assume(assume_number,defense_message,int_digit,numbers,count,npr,size,last_array_num_pointer);

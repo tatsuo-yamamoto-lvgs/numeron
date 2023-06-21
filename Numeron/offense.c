@@ -27,11 +27,39 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
             }
         }
     } 
-    else if(eats == 1 ){
+    if (eats == 0){
+        int eatsZeroCount = 0;
+        char** tmp_array = (char**)malloc(sizeof(char*)*(npr));
+        for(int i = 0; i < npr; i++) {
+            tmp_array[i] = (char*)malloc(sizeof(char)*(int_digit + 1));
+            memset(tmp_array[i], '\0', sizeof(char)*(int_digit + 1));
+        }
+        for (int i = count; i < *last_array_num_pointer; ++i){
+        int check =0;
+            for (int j = 0; j < int_digit; ++j){
+                if (numbers[i][j] == assume_number[j]) {
+                    ++check;
+                }
+            }
+            if (check == 0){
+                memcpy(tmp_array[eatsZeroCount], numbers[i], int_digit);
+                ++eatsZeroCount;
+                --*last_array_num_pointer;
+            }
+        }
+        for (int i = count; i < count+eatsZeroCount-1; ++i){
+            memcpy(numbers[i], tmp_array[i-count], int_digit);
+        }
+        for(int i = 0; i < npr; ++i) {
+            free(tmp_array[i]);
+        }
+        free(tmp_array);
+        printf("eatsZeroCountの数は%d\n",eatsZeroCount);
+    } 
+    if (eats >= 1 ){
         int eatsCount = 0;
         char** tmp_array = (char**)malloc(sizeof(char*)*(npr));
         for(int i = 0; i < npr; i++) {
-            
             tmp_array[i] = (char*)malloc(sizeof(char)*(int_digit + 1));
             memset(tmp_array[i], '\0', sizeof(char)*(int_digit + 1));
         }
@@ -42,9 +70,8 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
                     ++check;
                 }
             }
-            if ((check =! 0)){
+            if (check >= eats){
                 memcpy(tmp_array[eatsCount], numbers[i], int_digit);
-                // memcpy(numbers[i], numbers[*last_array_num_pointer-1], int_digit);
                 ++eatsCount;
                 --*last_array_num_pointer;
             }
@@ -57,6 +84,36 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
         }
         free(tmp_array);
         printf("eatsCountの数は%d\n",eatsCount);
+    }
+    if (byts >= 1 ){
+        int bytsCount = 0;
+        char** tmp_array = (char**)malloc(sizeof(char*)*(npr));
+        for(int i = 0; i < npr; i++) {
+            
+            tmp_array[i] = (char*)malloc(sizeof(char)*(int_digit + 1));
+            memset(tmp_array[i], '\0', sizeof(char)*(int_digit + 1));
+        }
+        for (int i = count; i < *last_array_num_pointer; ++i){
+        int check =0;
+            for (int digit_position = 0; digit_position < int_digit; digit_position++) {
+                if (strchr(numbers[i], assume_number[digit_position]) != NULL){
+                    ++check;
+                }
+            }
+            if (check >= byts){
+                memcpy(tmp_array[bytsCount], numbers[i], int_digit);
+                ++bytsCount;
+                --*last_array_num_pointer;
+            }
+        }
+        for (int i = count; i < count+bytsCount-1; ++i){
+            memcpy(numbers[i], tmp_array[i-count], int_digit);
+        }
+        for(int i = 0; i < npr; ++i) {
+            free(tmp_array[i]);
+        }
+        free(tmp_array);
+        printf("bytsCountの数は%d\n",bytsCount);
     }
     strcpy(assume_number,numbers[count]);
     // free(tmp);

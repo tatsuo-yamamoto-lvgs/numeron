@@ -134,6 +134,9 @@ int main(int argc, char *argv[])
         perror("socket error\n");
         exit(EXIT_FAILURE);
     }
+    int optval = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
+    
 
     /*初期化!構造体はすっかり前のことを忘れた！*/
     memset(&s_addr, 0, sizeof(struct sockaddr_in));

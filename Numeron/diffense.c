@@ -20,7 +20,7 @@ void judgment(char *str, char offense_message[], char random_number[], int digit
         }
     }
     sprintf(str,"%dE%dB", s, p);
-    printf("%s\n",str);
+    // printf("%s\n",str);
 }
 
 void shuffle(char array[], unsigned int size) {
@@ -44,7 +44,7 @@ void shuffle(char array[], unsigned int size) {
         } 
 }
 
-int transmission(int c_sock, int digit, char char_digit){
+int transmission(int c_sock, int digit, char char_digit, int repeat_number){
     int i;
     char array[11] = {"0123456789\0"};
     char *random_number = (char*)malloc(sizeof(char)*(digit+1));
@@ -52,15 +52,11 @@ int transmission(int c_sock, int digit, char char_digit){
         printf("malloc error\n");
         exit(EXIT_FAILURE);
     }
-    char str[5];//iEjB入れる用
+    char str[5] = "9999";//iEjB入れる用
 
-    /* 種を初期化 */
-    srand((unsigned int)time(NULL));
 
-    /* 乱数用のカードを用意 */
-    // for (i = 0; i < 10; i++) {
-    // array[i] = i;
-    // }
+    srand((unsigned int)time(NULL)+repeat_number);
+
     /* arrayの中身をシャッフル */
     shuffle(array, (sizeof(array) / sizeof(array[0])-1));
     /* 重複なしの乱数を生成（取得）*/
@@ -71,12 +67,6 @@ int transmission(int c_sock, int digit, char char_digit){
     for (int j = 0; j <= digit; j++){
         printf("%c",random_number[j]);
     }printf("\n");
-    // snprintf(str_random_number,sizeof(str_random_number),"%d",random_number);
-    /* 文字列として桁数を送信 */
-    printf("char_digitの値は:%c\n",char_digit);
-    if(write(c_sock, &char_digit, strlen(&char_digit)) == -1){
-        printf("Failed to send digits\n");
-    }
     char *offense_message = (char*)malloc(sizeof(char)*(digit+1));
     if(offense_message == NULL){
         printf("malloc error\n");
@@ -129,7 +119,7 @@ int transmission(int c_sock, int digit, char char_digit){
 
 int main(int argc, char *argv[])
 {
-    if (argc != 4){
+    if (argc != 5){
         perror("command line error\n");
         exit(EXIT_FAILURE);
     }
@@ -156,12 +146,11 @@ int main(int argc, char *argv[])
         perror("bind error\n");
         exit(EXIT_FAILURE);
     }
-
     if(listen(sock, 3) == -1){
         perror("listen error\n");
         exit(EXIT_FAILURE);
     }
-
+    
     while(1){
     printf("Waiting connect...\n");
     c_sock = accept(sock, (struct sockaddr*)&c_addr, &c_addr_length);
@@ -175,10 +164,15 @@ int main(int argc, char *argv[])
         break;
     }
     }
+    printf("char_digitの値は:%c\n",*argv[3]);
+    if(write(c_sock, argv[3], strlen(argv[3])) == -1){
+        printf("Failed to send digits\n");
+    }
     /*データのやり取り！ソケットは接続済みだ！*/
-    transmission(c_sock, digit, *argv[3]);
-
+    int game_count = atoi(argv[4]);
+    for(int repeat_num = 0; repeat_num < game_count;repeat_num++) {
+        transmission(c_sock, digit, *argv[3],repeat_num);
+    }
     close(sock);
     close(c_sock);
-
 }

@@ -120,7 +120,7 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
     strcpy(assume_number,numbers[count]);
 }
 
-int transmission(int sock, int int_digit, int npr, int n){
+int transmission(int sock, int int_digit, int npr, int n,double *total_time_pointer,double *total_trial_count_pointer){
     char defense_message[5] = "9999";
     // 候補となるnumberを作る
     char **numbers = (char**)malloc(sizeof(char*)*(npr));
@@ -152,8 +152,6 @@ int transmission(int sock, int int_digit, int npr, int n){
             break;
         }
         int read_bytes = read(sock, defense_message, sizeof(defense_message));
-        printf("read_bytes:%d\n",read_bytes);
-        printf("defense_message:%s\n",defense_message);
         if (read_bytes == -1){
             printf("defense_message:%s\n",defense_message);
             printf("read error(%s)\n",strerror(errno));
@@ -164,11 +162,13 @@ int transmission(int sock, int int_digit, int npr, int n){
         }
         else{
             printf("correct! %s times\n",defense_message);
+            *total_trial_count_pointer += atoi(defense_message);
             break;
         }
     }
     clock_t end = clock();
     double elapsed_time = ((double)(end - start) / CLOCKS_PER_SEC);
+    *total_time_pointer += elapsed_time;
     printf("time: %f\n", ((double)(end - start) / CLOCKS_PER_SEC));
     
     FILE *stream = fopen("time.txt", "a");
@@ -184,7 +184,7 @@ int transmission(int sock, int int_digit, int npr, int n){
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3){
+    if (argc != 4){
         perror("command line error\n");
         exit(EXIT_FAILURE);
     }
@@ -212,7 +212,6 @@ int main(int argc, char *argv[])
         close(sock);
         exit(EXIT_FAILURE);
     }
-    // Todo: コメント
     // defense側から桁数を受け取る
     char digit[2];
     if(read(sock, digit, sizeof(digit)) == -1){
@@ -222,11 +221,20 @@ int main(int argc, char *argv[])
     int n = 9;
     int int_digit = atoi(digit);
     int npr = factorial(int_digit, n);
-    // XXX:何で動くかわからないけど動いた
-    for(int repeat_num = 0; repeat_num < 3;repeat_num++) {
-        transmission(sock,int_digit,npr,n);
+    double total_time = 0;
+    double *total_time_pointer;
+    total_time_pointer = &total_time;
+    double total_trial_count = 0;
+    double *total_trial_count_pointer;
+    total_trial_count_pointer = &total_trial_count;
+    int game_count = atoi(argv[3]);
+    for(int repeat_num = 0; repeat_num < game_count;repeat_num++) {
+        transmission(sock,int_digit,npr,n,total_time_pointer,total_trial_count_pointer);
+        // XXX:何で動くかわからないけど動いた
         char defense_message[5] = "9999";
         int read_bytes = read(sock, defense_message, sizeof(defense_message));
     }
+    printf("Average Time:%f\n",total_time/game_count);
+    printf("Average Trial Count:%f\n",total_trial_count/game_count);
     close(sock);
 }

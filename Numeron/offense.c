@@ -48,8 +48,6 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
         for (int i = count; i < count+eatsZeroCount; i++){
             memcpy(numbers[i], tmp_array[i-count], int_digit);
         }
-
-
         int bytsCount = 0;
         for (int i = count; i < *last_array_num_pointer; i++){
         int check =0;
@@ -72,9 +70,7 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
         }
         free(tmp_array);
         
-
-
-
+        
     } else if(eats <= int_digit){
         int eatsbytsCount = 0;
         char** tmp_array = (char**)malloc(sizeof(char*)*(npr));
@@ -124,19 +120,9 @@ void assume(char *assume_number, char defense_message[], int int_digit, char *nu
     strcpy(assume_number,numbers[count]);
 }
 
-int transmission(int sock){
-    // defense側から桁数を受け取る
-    char digit[2];
-    char defense_message[7] = "999999";
-    if(read(sock, digit, sizeof(digit)) == -1){
-        printf("Failed to receive digits\n");
-    }
-    printf("受け取った桁数：%s\n",digit);
+int transmission(int sock, int int_digit, int npr, int n,double *total_time_pointer,double *total_trial_count_pointer){
+    char defense_message[5] = "9999";
     // 候補となるnumberを作る
-    int n = 9;
-    int int_digit = atoi(digit);
-    int npr = factorial(int_digit, n);
-
     char **numbers = (char**)malloc(sizeof(char*)*(npr));
     for(int i = 0; i < npr; i++) {
         numbers[i] = (char*)malloc(sizeof(char)*(int_digit + 1));
@@ -171,16 +157,23 @@ int transmission(int sock){
             printf("read error(%s)\n",strerror(errno));
             break;
         }
-        if (read_bytes == 5){
+        if (strchr(defense_message,'E') != NULL){
             printf("%s\n",defense_message);
         }
         else{
             printf("correct! %s times\n",defense_message);
+            *total_trial_count_pointer += atoi(defense_message);
             break;
         }
     }
     clock_t end = clock();
+    double elapsed_time = ((double)(end - start) / CLOCKS_PER_SEC);
+    *total_time_pointer += elapsed_time;
     printf("time: %f\n", ((double)(end - start) / CLOCKS_PER_SEC));
+    
+    FILE *stream = fopen("time.txt", "a");
+    fprintf(stream,"%f\n", elapsed_time);
+    fclose(stream);
     free(assume_number);
     for(int i = 0; i < npr; i++) {
         free(numbers[i]);
@@ -191,18 +184,20 @@ int transmission(int sock){
 
 int main(int argc, char *argv[])
 {
-    if (argc != 3){
+    if (argc != 4){
         perror("command line error\n");
         exit(EXIT_FAILURE);
     }
     /*ソケットを作成*/
-    int sock;   //ここでsocket用のメモリ領域を確保
-    struct sockaddr_in s_addr;  //s_addrにエイリアス
+    int sock;  
+    struct sockaddr_in s_addr;  
     sock = socket(AF_INET,SOCK_STREAM,0);
     if (sock == -1) {
         perror("socket error\n");
         exit(EXIT_FAILURE);
     }
+    int optval = 1;
+    setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
 
     /*初期化!構造体はすっかり前のことを忘れた！*/
     memset(&s_addr, 0, sizeof(struct sockaddr_in));
@@ -219,10 +214,29 @@ int main(int argc, char *argv[])
         close(sock);
         exit(EXIT_FAILURE);
     }
-    printf("Connection success!\n");
-    printf("File descriptor: %d\n", sock);
-
-    /*データのやり取り！ソケットは接続済みだ！*/
-    transmission(sock);
+    // defense側から桁数を受け取る
+    char digit[2];
+    if(read(sock, digit, sizeof(digit)) == -1){
+        printf("Failed to receive digits\n");
+    }
+    printf("受け取った桁数：%s\n",digit);
+    int n = 9;
+    int int_digit = atoi(digit);
+    int npr = factorial(int_digit, n);
+    double total_time = 0;
+    double *total_time_pointer;
+    total_time_pointer = &total_time;
+    double total_trial_count = 0;
+    double *total_trial_count_pointer;
+    total_trial_count_pointer = &total_trial_count;
+    int game_count = atoi(argv[3]);
+    for(int repeat_num = 0; repeat_num < game_count;repeat_num++) {
+        transmission(sock,int_digit,npr,n,total_time_pointer,total_trial_count_pointer);
+        // XXX:何で動くかわからないけど動いた
+        char defense_message[5] = "9999";
+        int read_bytes = read(sock, defense_message, sizeof(defense_message));
+    }
+    printf("Average Time:%f\n",total_time/game_count);
+    printf("Average Trial Count:%f\n",total_trial_count/game_count);
     close(sock);
 }

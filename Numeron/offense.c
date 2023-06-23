@@ -9,7 +9,7 @@
 #include <time.h>
 #include "offense.h"
 
-void assume(char *assume_number, char defense_message[], int int_digit, char *numbers[],int count,int npr,int size, int *last_array_num_pointer){
+void assume(char *assume_number, char defense_message[], int int_digit, char *numbers[],int count,int npr, int *last_array_num_pointer){
     int graveCountSum=0;
     int graveCount;
     int eats = atoi(&defense_message[0]);
@@ -128,7 +128,6 @@ int transmission(int sock, int int_digit, int npr, int n,double *total_time_poin
         numbers[i] = (char*)malloc(sizeof(char)*(int_digit + 1));
         memset(numbers[i], '\0', sizeof(char)*(int_digit + 1));
     }
-    int size = sizeof(numbers) / sizeof(numbers[0]); 
     
     createPermutationList(int_digit, n, numbers);
     
@@ -142,11 +141,11 @@ int transmission(int sock, int int_digit, int npr, int n,double *total_time_poin
     clock_t start = clock();
     while (1){
         // 数字を出す関数をここに
-        assume(assume_number,defense_message,int_digit,numbers,count,npr,size,last_array_num_pointer);
+        assume(assume_number,defense_message,int_digit,numbers,count,npr,last_array_num_pointer);
         count++;
         // 桁数分の数列をdefense側に送る
 
-        int write_bytes = write(sock, assume_number, sizeof(assume_number));
+        int write_bytes = write(sock, assume_number, sizeof(defense_message));
         if (write_bytes == -1){
             printf("write error\n");
             break;

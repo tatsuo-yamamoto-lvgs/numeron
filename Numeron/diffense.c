@@ -44,41 +44,43 @@ void shuffle(char array[], unsigned int size) {
         } 
 }
 
-int transmission(int c_sock, int digit, char char_digit, int repeat_number){
-    int i;
-    char array[11] = {"0123456789\0"};
-    char *random_number = (char*)malloc(sizeof(char)*(digit+1));
-    if(random_number == NULL){
-        printf("malloc error\n");
-        exit(EXIT_FAILURE);
-    }
-    char str[5] = "9999";//iEjB入れる用
-
+void decide_random_number(char *random_number, int digit, int repeat_number){
 
     srand((unsigned int)time(NULL)+repeat_number);
-
+    char array[11] = {"0123456789\0"};
     /* arrayの中身をシャッフル */
     shuffle(array, (sizeof(array) / sizeof(array[0])-1));
     /* 重複なしの乱数を生成（取得）*/
-    for (i = 0; i < digit; i++) {
+    for (int i = 0; i < digit; i++) {
         random_number[i] = array[i];
     }
     random_number[digit] = '\0';
     for (int j = 0; j <= digit; j++){
         printf("%c",random_number[j]);
     }printf("\n");
+}
+
+int transmission(int c_sock, int digit, char char_digit, int repeat_number){
+    char *random_number = (char*)malloc(sizeof(char)*(digit+1));
+    if(random_number == NULL){
+        printf("malloc error\n");
+        exit(EXIT_FAILURE);
+    }
+    decide_random_number(random_number,digit,repeat_number);
+    
     char *offense_message = (char*)malloc(sizeof(char)*(digit+1));
     if(offense_message == NULL){
         printf("malloc error\n");
         exit(EXIT_FAILURE);
     }
 
-    int trial = 0;
-    int trial_digit = 0;
+    char str[5] = "9999";//iEjB入れる用
+    int trial_num = 0;
+    int trial_num_digit = 0;
     char goal_str[5];
     sprintf(goal_str, "%dE0B", digit);
     while (1){
-        trial ++;
+        trial_num ++;
         //offense側からの送信を受け取る
         int read_bytes = read(c_sock, offense_message, sizeof(offense_message));
         if (read_bytes == -1){
@@ -89,14 +91,13 @@ int transmission(int c_sock, int digit, char char_digit, int repeat_number){
         //ここに文字列に対してiEjBを返す関数を書いて
         judgment(str, offense_message, random_number, digit);
         if (strcmp(str, goal_str)==0){
-            int tmp = trial;
+            int tmp = trial_num;
             while (tmp != 0){
                 tmp /= 10;
-                ++trial_digit;
+                ++trial_num_digit;
                 }
-            char* correct_message =  (char*)malloc(sizeof(char)*(1+trial_digit));
-            // memset(&correct_message, '\0', sizeof(correct_message));
-            sprintf(correct_message,  "%d", trial);
+            char* correct_message =  (char*)malloc(sizeof(char)*(1+trial_num_digit));
+            sprintf(correct_message,  "%d", trial_num);
             printf("%s\n",correct_message);
             int write_bytes = write(c_sock, correct_message, sizeof(correct_message));
             if (write_bytes == -1){
@@ -117,12 +118,15 @@ int transmission(int c_sock, int digit, char char_digit, int repeat_number){
     return 0;
 }
 
+
 int main(int argc, char *argv[])
 {
     if (argc != 5){
         perror("command line error\n");
         exit(EXIT_FAILURE);
     }
+    char *address = argv[1];
+    int port_num = atoi(argv[2]);
     int digit = atoi(argv[3]);
     /*ソケットを作成*/
     int sock, c_sock;   //ここでsocket用のメモリ領域を確保
@@ -136,7 +140,6 @@ int main(int argc, char *argv[])
     }
     int optval = 1;
     setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &optval, sizeof(optval));
-    
 
     /*初期化!構造体はすっかり前のことを忘れた！*/
     memset(&s_addr, 0, sizeof(struct sockaddr_in));
